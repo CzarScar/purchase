@@ -32,6 +32,7 @@ contract Purchase {
         seller = msg.sender;
         initValue = msg.value / 2;
         mortgages[seller] = initValue;
+
     }
 
     function value() constant returns (uint) {
@@ -43,6 +44,8 @@ contract Purchase {
     }
 
     function confirmPurchase() onlyDoubleInitValue payable {
+        require(msg.value == initValue * 2);
+        require(state == 0);
         buyer = msg.sender;
         mortgages[buyer] = initValue;
         state = 1;
@@ -51,16 +54,17 @@ contract Purchase {
 
     function confirmReceived() onlyBuyer {
         ItemReceived(msg.sender, "ItemReceived");
+        require(state == 1);
         state = 2;
         seller.transfer(this.balance - mortgages[buyer]);
         buyer.transfer(mortgages[buyer]);
     }
 
     function abort() onlySeller {
+        require(state == 0);
         seller.transfer(mortgages[seller] * 2);
         buyer.transfer(mortgages[buyer] * 2);
         state = 2;
         Aborted(msg.sender, "Aborted");
     }
-
 }
